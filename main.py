@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.ticker as ticker
 import copy
+import gc
+
 import csv
 
 import tkinter as tk
@@ -178,18 +180,35 @@ def generate_initial_population():
         while length < processes_number:
 
             list_number = i % jobs_number
+
             random_int = random.randint(0, len(jobs_process_lists[list_number]) - current_indices[list_number])
+            #print('random is ' + str(random_int) + ' list number ' + str(list_number))
+
             length += random_int  # this is wrong
+
+            #print('testing this = ' + str(current_indices[list_number]) + "----" + str(
+            #current_indices[list_number] + random_int))
 
             for j in range(current_indices[list_number], current_indices[list_number] + random_int):
                 print(jobs_process_lists[list_number][j])
                 chromosome.add_process(jobs_process_lists[list_number][j])
+                #test.append(jobs_process_lists[list_number][j])
 
             current_indices[list_number] += random_int
 
+            # print("-----")
+            # for index in current_indices:
+            #     print(index)
+            #
+            # print("-----")
+
             i += 1
+
+        #print(chromosome)
         population_list.append(chromosome)
 
+    #for process in test:
+    #print(process)
 
 
 def evaluate_chromosome(chromosome: Chromosome):
@@ -198,6 +217,8 @@ def evaluate_chromosome(chromosome: Chromosome):
     :return:int
     """
     global total_duration
+
+    # print("hi from evaluate ")
 
     print('ok 6')
     finish_times =chromosome.create_schedule()
@@ -211,7 +232,86 @@ def evaluate_chromosome(chromosome: Chromosome):
 
     for machine_number, process_list in machines_lists.items():
         time= process_list[-1].start + process_list[-1].duration
+        #time+=max(finish_times)
+        #time = process_list[-1].start
+        # print(time)
         evaluation += time
+
+    print('ok 6')
+    print(evaluation)
+    # print(total_duration - evaluation)
+
+    chromosome.evaluation = total_duration - evaluation
+    return total_duration - evaluation
+
+
+def evaluate_chromosome2(chromosome: Chromosome):
+    """     version 2 on finish time of the max
+    :param chromosome:
+    :return:int
+    """
+    global total_duration
+
+    # print("hi from evaluate ")
+
+    print('ok 6')
+    finish_times = chromosome.create_schedule()
+
+    if chromosome.evaluation == -1:
+        return -1
+
+    evaluation: int = 0
+
+    max_value = max(finish_times)
+    print(max_value)
+
+    # for time in finish_times:
+    #     # print(time)
+    #     evaluation += time
+
+    print('ok 6')
+    # print(evaluation)
+    # print(total_duration - evaluation)
+
+    chromosome.evaluation = total_duration - max_value
+    return total_duration - max_value
+
+
+def evaluate_chromosome2(chromosome: Chromosome):
+    """
+    evaluate on finish of jobs
+    :param chromosome:
+    :return:int
+    """
+    global total_duration
+
+    #print("hi from evaluate ")
+
+    print('ok 6')
+    finish_times = chromosome.create_schedule()
+    #machine_lists = chromosome.processes
+    #finish_times = [0 for _ in range(jobs_number)]
+
+    # for machine_number, process_list in chromosome.processes.items():
+    #     for process in process_list:
+    #         current_job = process.job_number
+    #         current_finish = process.start + process.duration
+    #         finish_time = max(current_finish, finish_times[current_job])
+    #         finish_times[current_job] = finish_time
+
+    if chromosome.evaluation == -1:
+        return -1
+
+    evaluation: int = 0
+
+    #print("Finish Times:")
+    for time in finish_times:
+        #print(time)
+        evaluation += time
+
+    print('ok 6')
+    #print(evaluation)
+    #print(total_duration - evaluation)
 
     chromosome.evaluation = total_duration - evaluation
     return total_duration - evaluation
@@ -219,12 +319,18 @@ def evaluate_chromosome(chromosome: Chromosome):
 
 def draw_gannt_chart(chromosome: Chromosome):
     chromosome.create_schedule()
-    machine_lists = chromosome.processes
 
+    machine_lists = chromosome.processes
+    #print(machine_lists)
+    #print(str(len(machine_lists)))
 
     # Initialize a list of named colors and shuffle for randomness
     colors = list(mcolors.CSS4_COLORS.keys())
     random.shuffle(colors)
+
+    # Assign a unique color to each job number
+    #job_numbers = {process.job_number for machine in machine_lists for process in machine}
+    #job_color_map = {job: colors[i % len(colors)] for i, job in enumerate(sorted(job_numbers))}
 
     job_numbers = range(jobs_number)
 
@@ -312,8 +418,15 @@ def select_chromosome(wheel):
     return chosen
 
 
-def cross_over(parent1: Chromosome, parent2: Chromosome):
+# def select_random(wheel):
+#     # Select individuals (parents) based on the roulette wheel
+#     chosen = random.choices(wheel, k=1)[0]
+#
+#     return chosen
 
+def cross_over(parent1: Chromosome, parent2: Chromosome):
+    #population_list.remove(parent1)
+    #population_list.remove(parent2)
 
     offspring1 = copy.deepcopy(parent1)
     offspring2 = copy.deepcopy(parent2)
@@ -347,7 +460,15 @@ def cross_over(parent1: Chromosome, parent2: Chromosome):
     if offspring2.evaluation == -1:
         print("******this offspring2 wrong********")
 
+    #offspring1.create_schedule()
+    #offspring2.create_schedule()
+
+    print("ok4")
+
+    print("done crossover")
+
     return offspring1, offspring2
+    #return chromosomes_to_compare[0], chromosomes_to_compare[1]
 
 
 def mutation(chromosome):
@@ -382,6 +503,9 @@ def mutation(chromosome):
 
     print('done mutation')
     return True
+
+    #return offspring
+
 
 def create_next_generation(population_list):  # see this
     global crossover_rate
@@ -429,33 +553,29 @@ def create_next_generation(population_list):  # see this
     return new_generation
 
 
-def runAlgorithim():
+def run():
     global population_list
     print("Welcome to our scheduling System ")
 
     input_file('inputSample_4x3.csv')
     generate_initial_population()
 
+    print("done random")
 
-    wheel = evaluate_population(population_list
+    print("done here")
+    print("Initial Generation G0")
 
     # Loop through the list and evaluate each chromosome
-    for i, chromosome in enumerate(population_list):
-        print(f"{i}: evaluation is = {chromosome.evaluation}")
-
+    #for i, chromosome in enumerate(population_list):
+        #print(f"{i}: evaluation is = {chromosome.evaluation}")
 
     count = 0
     max_evaluation = 0
-    prev_max = 0
     n=0
-
-
     while count<30 :
         n+=1
 
-        print("Next Generation G" + str(n))
-
-        population_list = create_next_generation3(population_list)
+        population_list = create_next_generation(population_list)
 
         max_chromosome = max(population_list, key=lambda x: x.evaluation)
         prev_max = max_evaluation
@@ -474,8 +594,9 @@ def runAlgorithim():
 
     while True:
         num = int(input('what chromosome would you like to see?'))
+
         chromosome = population_list[num]
         draw_gannt_chart(chromosome)
 
 
-runAlgorithim()
+run()
