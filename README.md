@@ -38,14 +38,6 @@ The `Chromosome` class simulates a possible scheduling solution, holding a list 
 
 ## 📖 Further Reading
 
-For a more detailed discussion on problem formulation and the test cases used to evaluate this system, please refer to the [attached report] (Report_AI_Project.pdf) . 
+For a more detailed discussion on problem formulation and the test cases used to evaluate this system, please refer to the * [Link to full report](#)(Report_AI_Project.pdf) . 
 
-
-
-
-
-
----
-
-*For further exploration and more test cases, refer to the full project report.* [Link to full report](#)
 
